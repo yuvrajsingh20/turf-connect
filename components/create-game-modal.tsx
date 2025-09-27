@@ -4,11 +4,14 @@ import type React from "react"
 
 import { useState } from "react"
 import { mutate } from "swr"
+import { STATE_CITIES } from "@/lib/types"
 
 type Game = {
   id: string
   sport: string
   venue: string
+  state: string
+  city: string
   date: string
   time: string
   ageGroup: string
@@ -29,6 +32,8 @@ export function CreateGameModal({
   const [form, setForm] = useState({
     sport: "Soccer 7v7",
     venue: "",
+    state: "",
+    city: "",
     date: "",
     time: "",
     ageGroup: "18-30",
@@ -60,6 +65,8 @@ export function CreateGameModal({
         body: JSON.stringify({
           sport: form.sport.trim(),
           venue: form.venue.trim(),
+          state: form.state,
+          city: form.city,
           date: form.date,
           time: form.time,
           ageGroup: form.ageGroup,
@@ -141,6 +148,57 @@ export function CreateGameModal({
               onChange={(e) => update("venue", e.target.value)}
             />
           </label>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <label className="grid gap-1 text-sm">
+              <span>State</span>
+              <select
+                required
+                className="rounded-md border border-border bg-background px-3 py-2"
+                value={form.state}
+                onChange={(e) => {
+                  update("state", e.target.value)
+                  update("city", "") // Reset city when state changes
+                }}
+              >
+                <option value="">Select State</option>
+                {Object.keys(STATE_CITIES).map(state => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm">
+              <span>City</span>
+              <select
+                required
+                className="rounded-md border border-border bg-background px-3 py-2"
+                value={form.city}
+                onChange={(e) => update("city", e.target.value)}
+                disabled={!form.state}
+              >
+                <option value="">Select City</option>
+                {form.state && (
+                  <>
+                    <optgroup label="Tier 1 Cities">
+                      {STATE_CITIES[form.state]?.tier1.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Tier 2 Cities">
+                      {STATE_CITIES[form.state]?.tier2.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Tier 3 Cities">
+                      {STATE_CITIES[form.state]?.tier3.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </optgroup>
+                  </>
+                )}
+              </select>
+            </label>
+          </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <label className="grid gap-1 text-sm">
