@@ -5,6 +5,8 @@ export interface IGame extends Document {
   _id: string;
   sport: string;
   venue: string;
+  state: string;
+  city: string;
   date: string; // ISO date e.g., 2025-09-25
   time: string; // 24h time e.g., 18:00
   ageGroup: string;
@@ -31,6 +33,16 @@ const GameSchema = new Schema<IGame>({
     trim: true,
     minlength: 2,
     maxlength: 100
+  },
+  state: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  city: {
+    type: String,
+    required: true,
+    trim: true
   },
   date: { 
     type: String, 

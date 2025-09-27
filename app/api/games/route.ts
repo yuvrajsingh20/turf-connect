@@ -5,9 +5,40 @@ import { NextResponse } from "next/server";
 import { basicString } from "@/lib/auth";
 import { createGame, listGames } from "@/lib/games";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const games = await listGames();
+    const { searchParams } = new URL(request.url);
+    const state = searchParams.get('state');
+    const city = searchParams.get('city');
+    const cityTier = searchParams.get('tier');
+    
+    let games = await listGames();
+    
+    // Apply filters
+    if (state) {
+      games = games.filter(game => game.state === state);
+    }
+    
+    if (city) {
+      games = games.filter(game => game.city === city);
+    }
+    
+    // Filter by city tier if specified
+    if (cityTier && state) {
+      const { STATE_CITIES } = await import('@/lib/types');
+      const stateCities = STATE_CITIES[state];
+      if (stateCities) {
+        let tierCities: string[] = [];
+        if (cityTier === 'tier1') tierCities = stateCities.tier1;
+        else if (cityTier === 'tier2') tierCities = stateCities.tier2;
+        else if (cityTier === 'tier3') tierCities = stateCities.tier3;
+        
+        if (tierCities.length > 0) {
+          games = games.filter(game => tierCities.includes(game.city));
+        }
+      }
+    }
+    
     return NextResponse.json({ games });
   } catch (error) {
     console.error('Error fetching games:', error);
@@ -21,6 +52,8 @@ export async function POST(req: Request) {
 
     const sport = basicString(body?.sport);
     const venue = basicString(body?.venue);
+    const state = basicString(body?.state);
+    const city = basicString(body?.city);
     const date = basicString(body?.date);
     const time = basicString(body?.time);
     const ageGroup = basicString(body?.ageGroup);
@@ -29,7 +62,7 @@ export async function POST(req: Request) {
     const playersNeeded = Number(body?.playersNeeded ?? NaN);
     const costPerPlayer = Number(body?.costPerPlayer ?? NaN);
 
-    if (!sport || !venue || !date || !time || !ageGroup || !createdBy) {
+    if (!sport || !venue || !state || !city || !date || !time || !ageGroup || !createdBy) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
     if (!Number.isFinite(playersNeeded) || playersNeeded < 0) {
@@ -42,6 +75,8 @@ export async function POST(req: Request) {
     const game = await createGame({
       sport,
       venue,
+      state,
+      city,
       date,
       time,
       ageGroup,
